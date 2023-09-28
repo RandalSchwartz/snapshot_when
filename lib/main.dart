@@ -29,21 +29,32 @@ class _MainAppState extends State<MainApp> {
           stream: counterStream,
           builder: (context, snapshot) {
             debugPrint('$snapshot');
-            return Center(
-              child: switch (snapshot) {
-                AsyncSnapshot(hasData: true, data: int d) => Text('$d'),
-                AsyncSnapshot(
-                  hasError: true,
-                  error: Object e,
-                  stackTrace: StackTrace s
-                ) =>
-                  Error.throwWithStackTrace(e, s),
-                _ => const CircularProgressIndicator.adaptive(),
-              },
+            return snapshot.when(
+              data: (d) => Text('$d'),
+              error: (e, s) => Error.throwWithStackTrace(e, s),
+              loading: () => const CircularProgressIndicator.adaptive(),
             );
           },
         ),
       ),
     ));
   }
+}
+
+extension SnapshotWhen<T, R> on AsyncSnapshot<T> {
+  R when({
+    required R Function(T data) data,
+    required R Function(Object error, StackTrace stackTrace) error,
+    required R Function() loading,
+  }) =>
+      switch (this) {
+        AsyncSnapshot(hasData: true, data: T d) => data(d),
+        AsyncSnapshot(
+          hasError: true,
+          error: Object e,
+          stackTrace: StackTrace s
+        ) =>
+          error(e, s),
+        _ => loading(),
+      };
 }
