@@ -29,11 +29,7 @@ class _MainAppState extends State<MainApp> {
           stream: counterStream,
           builder: (context, snapshot) {
             debugPrint('$snapshot');
-            return snapshot.when(
-              data: (d) => Text('$d'),
-              error: (e, s) => Error.throwWithStackTrace(e, s),
-              loading: () => const CircularProgressIndicator.adaptive(),
-            );
+            return snapshot.whenWidget();
           },
         ),
       ),
@@ -57,4 +53,17 @@ extension SnapshotWhen<T, R> on AsyncSnapshot<T> {
           error(e, s),
         _ => loading(),
       };
+}
+
+extension SnapshotWhenWidget<T> on AsyncSnapshot<T> {
+  Widget whenWidget({
+    Widget Function(T data)? data,
+    Widget Function(Object error, StackTrace stackTrace)? error,
+    Widget Function()? loading,
+  }) =>
+      when(
+        data: data ?? (d) => Text('$d'),
+        error: error ?? (e, s) => Error.throwWithStackTrace(e, s),
+        loading: loading ?? () => const CircularProgressIndicator.adaptive(),
+      );
 }
